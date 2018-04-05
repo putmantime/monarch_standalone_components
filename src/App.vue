@@ -5,8 +5,10 @@
          href="#">
         <strong>Monarch Initiative</strong>
       </a>
-      <div class="w-100">
-        <monarch-autocomplete></monarch-autocomplete>
+      <div class="w-100 mt-2">
+        <monarch-autocomplete
+          v-on:value="handleSuggestion"
+        ></monarch-autocomplete>
       </div>
       <ul class="navbar-nav px-3">
         <li class="nav-item text-nowrap">
@@ -21,6 +23,11 @@
 <script>
 export default {
   name: 'App',
+  methods: {
+    handleSuggestion(payload) {
+      console.log(payload);
+    },
+  },
 };
 </script>
 

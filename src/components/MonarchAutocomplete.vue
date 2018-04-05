@@ -1,25 +1,45 @@
 <template>
   <div class="autocomplete" style="position:relative" v-bind:class="{'open':open}">
-    <input v-bind:class="{'loading': loading}"
-           class="form-control"
-           type="text"
-           v-model="value"
-           v-on:input="debounceInput"
-           @keydown.enter='enter'
-           @keydown.down='down'
-           @keydown.up='up'
-           placeholder="search..."
-    >
-    <div v-if="suggestions.length > 0"
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <button class="btn btn-outline-secondary dropdown-toggle"
+                type="button"
+                v-on:click="catDropDown = !catDropDown">
+                Categories
+        </button>
+        <div v-if="catDropDown" class="dropdown-menu list-group dropCatList px-4">
+          <div>
+            <b-form-group>
+              <b-form-radio-group v-model="selected"
+                                  :options="options"
+                                  stacked
+                                  name="radiosStacked">
+              </b-form-radio-group>
+            </b-form-group>
+          </div>
+        </div>
+      </div>
+      <input v-bind:class="{'loading': loading}"
+             class="form-control"
+             type="text"
+             v-model="value"
+             v-on:input="debounceInput"
+             @keydown.enter='enter'
+             @keydown.down='down'
+             @keydown.up='up'
+             placeholder="search..."
+      >
+    </div>
+    <div v-if="open"
          class="dropdown-menu list-group dropList px-4">
-      <ul v-for="(suggestion, index) in suggestions.slice(0,10)" :key="index">
+      <ul v-for="(suggestion, index) in suggestions" :key="index">
         <li @click="suggestionClick(index)"
             v-bind:class="{'active': isActive(index)}"
             v-on:mouseover="mouseOver(index)"
             class="dropList px-4"
             :title="suggestion.definition">
           <div class="row">
-            <div class="col-5"><strong>{{ ...suggestion.label_eng }}</strong></div>
+            <div class="col-5"><strong>{{ ...suggestion.label }}</strong></div>
             <div class="col-3"><i>{{suggestion.taxon_label}}</i></div>
             <div class="col-1">
               <small>{{...suggestion.category | allLower}}</small>
@@ -30,16 +50,17 @@
           </div>
         </li>
       </ul>
-      <div v-if="homeSearch">
+      <div class="row">
         <div v-if="suggestions.length > 0"
-             class="btn form-control form-inline border-top"
+             class="btn btn-outline-secondary col-10 m-2"
              v-on:click="showMore"
         >
           Show more results for '{{value}}'
         </div>
-        <div v-else>
+        <div v-if="suggestions.length === 0" class="btn col-10 m-2">
           No results for '{{value}}'
         </div>
+        <div  class="btn btn-outline-info col m-2" @click="clearSearch">Clear Search</div>
       </div>
     </div>
   </div>
@@ -52,19 +73,19 @@ const debounce = require('lodash/debounce');
 
 export default {
   name: 'AutoComplete',
-  props: {
-    semanticType: {
-      type: String,
-      required: false,
-    },
-    homeSearch: {
-      type: Boolean,
-      required: false,
-      default: true,
-    },
-  },
   data() {
     return {
+      selected: 'all',
+      options: [
+        { text: 'Phenotype', value: 'Phenotype' },
+        { text: 'Gene', value: 'gene' },
+        { text: 'Disease', value: 'disease' },
+        { text: 'Variant', value: 'variant' },
+        { text: 'Model', value: 'model' },
+        { text: 'All', value: 'all' },
+
+      ],
+      catDropDown: false,
       value: '',
       suggestions: [],
       open: false,
@@ -83,10 +104,21 @@ export default {
       function () {
         if (this.value) {
           this.loading = true;
-          const bioLinkUrl = `https://api.monarchinitiative.org/api/search/entity/${this.value}`;
-          axios.get(bioLinkUrl)
+          const solrUrl = 'https://solr.monarchinitiative.org/solr/search/select/';
+          const params = {
+            q: this.value,
+            wt: 'json',
+            rows: '10',
+            defType: 'edismax',
+            qf: 'synonym_eng',
+            fl: 'label,id,category,definition,taxon,taxon_label',
+          };
+          if (this.selected !== 'all') {
+            params.fq = `category:${this.selected}`;
+          }
+          axios.get(solrUrl, { params })
             .then((resp) => {
-              this.suggestions = resp.data.docs;
+              this.suggestions = resp.data.response.docs;
               this.open = true;
               this.loading = false;
             })
@@ -132,6 +164,10 @@ export default {
     },
     showMore() {
       window.location = `/search/${this.value}`;
+    },
+    clearSearch() {
+      this.suggestions = [];
+      this.value = '';
     },
   },
   watch: {
@@ -187,6 +223,11 @@ export default {
     padding-left: 2px;
     padding-right: 2px;
   }
+  .dropCatList{
+    border-radius: 2px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
   li:hover {
     background-color: cornflowerblue;
     color: white;
@@ -195,5 +236,4 @@ export default {
     background-color: cornflowerblue;
     color: white;
   }
-
 </style>
