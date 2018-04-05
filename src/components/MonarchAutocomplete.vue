@@ -12,16 +12,22 @@
     >
     <div v-if="suggestions.length > 0"
          class="dropdown-menu list-group dropList px-4">
-      <ul v-for="(suggestion, index) in suggestions" :key="index">
+      <ul v-for="(suggestion, index) in suggestions.slice(0,10)" :key="index">
         <li @click="suggestionClick(index)"
             v-bind:class="{'active': isActive(index)}"
             v-on:mouseover="mouseOver(index)"
             class="dropList px-4"
-            v-b-tooltip.placement.right
             :title="suggestion.definition">
-          <strong>{{ ...suggestion.label_eng }}</strong>
-          <span style="float:right; clear:right; margin-right: 25px">
-            <small>{{ suggestion.id }}</small></span>
+          <div class="row">
+            <div class="col-5"><strong>{{ ...suggestion.label_eng }}</strong></div>
+            <div class="col-3"><i>{{suggestion.taxon_label}}</i></div>
+            <div class="col-1">
+              <small>{{...suggestion.category | allLower}}</small>
+            </div>
+            <div class="col-3">
+              <small>{{ suggestion.id }}</small>
+            </div>
+          </div>
         </li>
       </ul>
       <div v-if="homeSearch">
@@ -65,6 +71,11 @@ export default {
       current: 0,
       loading: false,
     };
+  },
+  filters: {
+    allLower(word) {
+      return word.toLowerCase();
+    },
   },
   methods: {
     debounceInput: debounce(
