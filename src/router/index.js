@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import HelloWorld from '@/components/HelloWorld';
+import Node from '@/components/Node';
 import AnalyzePhenotypes from '@/components/AnalyzePhenotypes';
 
 Vue.use(Router);
@@ -10,9 +10,10 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'HelloWorld',
-      component: HelloWorld,
-    },{
+      name: 'Node',
+      component: Node,
+    },
+    {
       path: '/analyze/phenotypes',
       name: 'AnalyzePhenotypes',
       component: AnalyzePhenotypes,
